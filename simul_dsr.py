@@ -219,7 +219,7 @@ class Simulation:
 		counter = 1 
 		for commune in self.data_communes:
 			print(counter)
-			simulation_source[commune.commune_data["code_insee"]] = {}
+			simulation_source[commune.commune_data["code_insee"]] = {"nom_com":commune.commune_data["nom_commune"]}
 			if self._eligible_generale(commune,self.legislation_source.L2334_20_code):
 				simulation_source[commune.commune_data["code_insee"]]["elig_generale"] = True
 				if self._eligible_frac_1(commune,self.legislation_source.L2334_21_code):
