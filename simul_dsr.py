@@ -216,35 +216,61 @@ class Simulation:
 	def _simulation_generale(self):
 		#source
 		simulation_source = {}
+		
 		counter = 1 
 		for commune in self.data_communes:
-			print(counter)
-			simulation_source[commune.commune_data["code_insee"]] = {"nom_com":commune.commune_data["nom_commune"]}
-			if self._eligible_generale(commune,self.legislation_source.L2334_20_code):
-				simulation_source[commune.commune_data["code_insee"]]["elig_generale"] = True
-				if self._eligible_frac_1(commune,self.legislation_source.L2334_21_code):
-					simulation_source[commune.commune_data["code_insee"]]["elig_frac_1"] = True
+
+			cinsee = False
+			try:
+				if int(commune.commune_data["code_insee"][0:2])<10:
+					cinsee = True
 				else:
-					simulation_source[commune.commune_data["code_insee"]]["elig_frac_1"] = False
+					cinsee = False
+			except:
+				cinsee = True
 
-			else:
-				simulation_source[commune.commune_data["code_insee"]]["elig_generale"] = False
-			counter+=1
+			if cinsee:
+				print(counter)
+				simulation_source[commune.commune_data["code_insee"]] = {"nom_com":commune.commune_data["nom_commune"]}
+				if self._eligible_generale(commune,self.legislation_source.L2334_20_code):
+					simulation_source[commune.commune_data["code_insee"]]["elig_generale"] = True
+					if self._eligible_frac_1(commune,self.legislation_source.L2334_21_code):
+						simulation_source[commune.commune_data["code_insee"]]["elig_frac_1"] = True
+					else:
+						simulation_source[commune.commune_data["code_insee"]]["elig_frac_1"] = False
 
-		simulation_nouvelle = {}
-		counter = 1 
+				else:
+					simulation_source[commune.commune_data["code_insee"]]["elig_generale"] = False
+				counter+=1
+
+				simulation_nouvelle = {}
+			
+
+		counter = 1
 		for commune in self.data_communes:
-			print(counter)
-			simulation_nouvelle[commune.commune_data["code_insee"]] = {}
-			if self._eligible_generale(commune,self.legislation_amdt.L2334_20_code):
-				simulation_nouvelle[commune.commune_data["code_insee"]]["elig_generale"] = True
-				if self._eligible_frac_1(commune,self.legislation_amdt.L2334_21_code):
-					simulation_nouvelle[commune.commune_data["code_insee"]]["elig_frac_1"] = True
+
+			cinsee = False
+			try:
+				if int(commune.commune_data["code_insee"][0:2])<10:
+					cinsee = True
 				else:
-					simulation_nouvelle[commune.commune_data["code_insee"]]["elig_frac_1"] = False		
-			else:
-				simulation_nouvelle[commune.commune_data["code_insee"]]["elig_generale"] = False
-			counter+=1
+					cinsee = False
+			except:
+				cinsee = True
+
+			if cinsee:
+
+				print(counter)
+				simulation_nouvelle[commune.commune_data["code_insee"]] = {}
+				if self._eligible_generale(commune,self.legislation_amdt.L2334_20_code):
+					simulation_nouvelle[commune.commune_data["code_insee"]]["elig_generale"] = True
+					if self._eligible_frac_1(commune,self.legislation_amdt.L2334_21_code):
+						simulation_nouvelle[commune.commune_data["code_insee"]]["elig_frac_1"] = True
+					else:
+						simulation_nouvelle[commune.commune_data["code_insee"]]["elig_frac_1"] = False		
+				else:
+					simulation_nouvelle[commune.commune_data["code_insee"]]["elig_generale"] = False
+				counter+=1
 
 		return simulation_source,simulation_nouvelle
 
@@ -375,8 +401,7 @@ class Simulation:
 		synthese = {}
 		
 		for e in source:
-			synthese[e] = {}
-			print(source[e])
+			synthese[e] = {"nom_com":source[e]["nom_com"]}
 			if not source[e]["elig_generale"]:
 				synthese[e]["avant"] = {"elig_generale":False,"elig_frac_1":False}
 			else:
@@ -401,6 +426,8 @@ class Simulation:
 s = Simulation(db_communes,a,b,d_c)
 o,n = s._simulation_generale()
 syn = s._generer_synthese(o,n)
+
+print(syn)
 
 
 
