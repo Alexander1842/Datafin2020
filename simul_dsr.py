@@ -230,7 +230,6 @@ class Simulation:
 				cinsee = True
 
 			if cinsee:
-				print(counter)
 				simulation_source[commune.commune_data["code_insee"]] = {"nom_com":commune.commune_data["nom_commune"]}
 				if self._eligible_generale(commune,self.legislation_source.L2334_20_code):
 					simulation_source[commune.commune_data["code_insee"]]["elig_generale"] = True
@@ -259,8 +258,6 @@ class Simulation:
 				cinsee = True
 
 			if cinsee:
-
-				print(counter)
 				simulation_nouvelle[commune.commune_data["code_insee"]] = {}
 				if self._eligible_generale(commune,self.legislation_amdt.L2334_20_code):
 					simulation_nouvelle[commune.commune_data["code_insee"]]["elig_generale"] = True
@@ -426,8 +423,6 @@ class Simulation:
 s = Simulation(db_communes,a,b,d_c)
 o,n = s._simulation_generale()
 syn = s._generer_synthese(o,n)
-
-print(syn)
 
 
 
