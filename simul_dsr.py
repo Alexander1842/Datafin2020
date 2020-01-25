@@ -398,7 +398,7 @@ class Simulation:
 		return synthese
 
 
-s = Simulation(db_communes,a,a,d_c)
+s = Simulation(db_communes,a,b,d_c)
 o,n = s._simulation_generale()
 syn = s._generer_synthese(o,n)
 
