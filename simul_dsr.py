@@ -4,6 +4,7 @@
 
 import csv
 
+
 def get_dict_db(path):
 	with open(path, newline='') as csvfile:	
 			db = {}
@@ -165,6 +166,8 @@ db_communes = []
 for e in db_raw:
 	db_communes.append(Commune(db_raw,e))
 
+d_c = {"nat_pfi_m_10k":856.050899}
+
 
 
 
@@ -204,26 +207,51 @@ for e in db_raw:
 # # Formule répartition bourg-centre
 
 class Simulation:
-	def __init__(self, data_communes, legislation_source, legislation_amdt):
+	def __init__(self, data_communes, legislation_source, legislation_amdt, data_constante):
 		self.data_communes = data_communes
 		self.legislation_source = legislation_source
 		self.legislation_amdt = legislation_amdt
-
+		self.data_constante = data_constante
 
 	def _simulation_generale(self):
 		#source
 		simulation_source = {}
-
+		counter = 1 
 		for commune in self.data_communes:
+			print(counter)
+			simulation_source[commune.commune_data["code_insee"]] = {}
 			if self._eligible_generale(commune,self.legislation_source.L2334_20_code):
-				print(commune.commune_data["nom_commune"]," est éligible")
+				simulation_source[commune.commune_data["code_insee"]]["elig_generale"] = True
+				if self._eligible_frac_1(commune,self.legislation_source.L2334_21_code):
+					simulation_source[commune.commune_data["code_insee"]]["elig_frac_1"] = True
+				else:
+					simulation_source[commune.commune_data["code_insee"]]["elig_frac_1"] = False
+
 			else:
-				pass
+				simulation_source[commune.commune_data["code_insee"]]["elig_generale"] = False
+			counter+=1
+
+		simulation_nouvelle = {}
+		counter = 1 
+		for commune in self.data_communes:
+			print(counter)
+			simulation_nouvelle[commune.commune_data["code_insee"]] = {}
+			if self._eligible_generale(commune,self.legislation_amdt.L2334_20_code):
+				simulation_nouvelle[commune.commune_data["code_insee"]]["elig_generale"] = True
+				if self._eligible_frac_1(commune,self.legislation_amdt.L2334_21_code):
+					simulation_nouvelle[commune.commune_data["code_insee"]]["elig_frac_1"] = True
+				else:
+					simulation_nouvelle[commune.commune_data["code_insee"]]["elig_frac_1"] = False		
+			else:
+				simulation_nouvelle[commune.commune_data["code_insee"]]["elig_generale"] = False
+			counter+=1
+
+		return simulation_source,simulation_nouvelle
 
 
 	def _eligible_generale(self,commune,legislation_applicable):
 		try:
-			if int(commune.commune_data["code_insee"][0:2])<96:
+			if int(commune.commune_data["code_insee"][0:2])<10:
 				cinsee = True
 			else:
 				cinsee = False
@@ -254,77 +282,125 @@ class Simulation:
 			cinsee = True
 
 		if cinsee:
+			
 			if int(commune.commune_data["unite_urbaine_pop_dep"]) > int(legislation_applicable["elig_frac_1_agg_pc_pop_dep"]):
 				return False
 			if int(commune.commune_data["unite_urbaine_pop"].replace(" ","")) > int(legislation_applicable["elig_frac_1_agg_pop_tot"].replace(" ","")):
 				return False
-			if int(self.data_communes[commune.commune_data["unite_urbaine_ville_chef_lieu_dep"]].commune_data["commune_pop"].replace(" ","")) > legislation_applicable["elig_frac_1_chef_lieu_pop"]:
+
+			cible = commune.commune_data["canton_chef_lieu_code"]
+			if len(cible)==4:
+				cible = "0"+cible
+
+
+
+			for e in self.data_communes:
+				if e.commune_data["code_insee"] == cible:
+					c_cible = e
+					break
+			
+			if int(c_cible.commune_data["commune_pop"].replace(" ","")) > int(legislation_applicable["elig_frac_1_chef_lieu_pop"].replace(" ","")):
 				return False
 			
+			if legislation_applicable["elig_frac_1_diff_pfi"] == "double":
+				dif_pfi = 2
+			elif legislation_applicable["elig_frac_1_diff_pfi"] == "triple":
+				dif_pfi = 3
 
+			if float(commune.commune_data["commune_pfi_hab"].replace(",","."))/self.data_constante["nat_pfi_m_10k"] > dif_pfi:
+				return False
 
+			if commune.commune_data["commune_chef_lieu_arr"] != "NON":
+				if int(commune.commune_data["commune_pop"].replace(" ","")) < 20000:
+					return True
 
+			if (float(commune.commune_data["canton_pop"].replace(",","."))*100)>float((legislation_applicable["elig_frac_1_crit_pc_pop_canton"].replace(",","."))):
+				return True
 
-		
+			return False
 
 		else:
 			return False
 
 
+		# # def _calc_dsr_bc(self):
+			
+		# # 	rapport_pfi = 1 + ((nat_pfi_m_10k-commune_pfi_hab)/nat_pfi_m_10k)
+		# # 	return commune_pop_dgf * rapport_pfi * commune_effort_fiscal * commune_coeff_zrr * valeur_point_forfait
+
+		# # # Formule répartition fraction péréquation
+
+		# # def _calc_dsr_perequation(self):
+			
+		# # 	rapport_pfi = 1 + ((nat_pfi_m_10k-commune_pfi_hab)/nat_pfi_m_10k)
+		# # 	envl_1 = commune_pop_dgf * rapport_pfi * commune_effort_fiscal * valeur_point_perequation_tiers_1
+
+		# # 	commune_longueur_voirie_maj = 1
+		# # 	if commune_montagne :
+		# # 		commune_longueur_voirie_maj = 2
+		# # 	if commune_insulaire :
+		# # 		commune_longueur_voirie_maj = 2
+
+		# 	envl_2 = commune_longueur_voirie * commune_longueur_voirie_maj * valeur_point_perequation_tiers_2
+
+		# 	envl_3 = commune_pop_3a16 * commune_point_perequation_tiers_3
+
+		# 	rapport_pfis = 1 + ((nat_pfis_10k-commune_pfis)/nat_pfis_10k)
+		# 	envl_4 = commune_pop_dgf * rapport_pfis * valeur_point_perequation_10pc
+
+		# 	return envl_1 + envl_2 + envl_3 + envl_4
 
 
-	def _calc_dsr_bc(self):
+		# def _calc_dsr_cible(self):
+		# 	rapport_pfi = 1 + ((nat_pfi_m_10k-commune_pfi_hab)/nat_pfi_m_10k)
+		# 	envl_1 = commune_pop_dgf * rapport_pfi * commune_effort_fiscal * valeur_point_cible_tiers_1
+
+		# 	commune_longueur_voirie_maj = 1
+		# 	if commune_montagne :
+		# 		commune_longueur_voirie_maj = 2
+		# 	if commune_insulaire :
+		# 		commune_longueur_voirie_maj = 2
+
+		# 	envl_2 = commune_longueur_voirie * commune_longueur_voirie_maj * valeur_point_cible_tiers_2
+
+		# 	envl_3 = commune_pop_3a16 * commune_point_perequation_tiers_3
+
+		# 	rapport_pfis = 1 + ((nat_pfis_10k-commune_pfis)/nat_pfis_10k)
+		# 	envl_4 = commune_pop_dgf * rapport_pfis * valeur_point_cible_10pc
+
+		# 	return envl_1 + envl_2 + envl_3 + envl_4
+
+
+	def _generer_synthese(self,source,nouveau):
+		synthese = {}
 		
-		rapport_pfi = 1 + ((nat_pfi_m_10k-commune_pfi_hab)/nat_pfi_m_10k)
-		return commune_pop_dgf * rapport_pfi * commune_effort_fiscal * commune_coeff_zrr * valeur_point_forfait
+		for e in source:
+			synthese[e] = {}
+			print(source[e])
+			if not source[e]["elig_generale"]:
+				synthese[e]["avant"] = {"elig_generale":False,"elig_frac_1":False}
+			else:
+				synthese[e]["avant"] = {"elig_generale":True}
+				if not source[e]["elig_frac_1"]:
+					synthese[e]["avant"]["elig_frac_1"] = False
+				else:
+					synthese[e]["avant"]["elig_frac_1"] = True
 
-	# Formule répartition fraction péréquation
+			if not nouveau[e]["elig_generale"]:
+				synthese[e]["apres"] = {"elig_generale":False,"elig_frac_1":False}
+			else:
+				synthese[e]["apres"] = {"elig_generale":True}
+				if not nouveau[e]["elig_frac_1"]:
+					synthese[e]["apres"]["elig_frac_1"] = False
+				else:
+					synthese[e]["apres"]["elig_frac_1"] = True
 
-	def _calc_dsr_perequation(self):
-		
-		rapport_pfi = 1 + ((nat_pfi_m_10k-commune_pfi_hab)/nat_pfi_m_10k)
-		envl_1 = commune_pop_dgf * rapport_pfi * commune_effort_fiscal * valeur_point_perequation_tiers_1
-
-		commune_longueur_voirie_maj = 1
-		if commune_montagne :
-			commune_longueur_voirie_maj = 2
-		if commune_insulaire :
-			commune_longueur_voirie_maj = 2
-
-		envl_2 = commune_longueur_voirie * commune_longueur_voirie_maj * valeur_point_perequation_tiers_2
-
-		envl_3 = commune_pop_3a16 * commune_point_perequation_tiers_3
-
-		rapport_pfis = 1 + ((nat_pfis_10k-commune_pfis)/nat_pfis_10k)
-		envl_4 = commune_pop_dgf * rapport_pfis * valeur_point_perequation_10pc
-
-		return envl_1 + envl_2 + envl_3 + envl_4
+		return synthese
 
 
-	def _calc_dsr_cible(self):
-		rapport_pfi = 1 + ((nat_pfi_m_10k-commune_pfi_hab)/nat_pfi_m_10k)
-		envl_1 = commune_pop_dgf * rapport_pfi * commune_effort_fiscal * valeur_point_cible_tiers_1
-
-		commune_longueur_voirie_maj = 1
-		if commune_montagne :
-			commune_longueur_voirie_maj = 2
-		if commune_insulaire :
-			commune_longueur_voirie_maj = 2
-
-		envl_2 = commune_longueur_voirie * commune_longueur_voirie_maj * valeur_point_cible_tiers_2
-
-		envl_3 = commune_pop_3a16 * commune_point_perequation_tiers_3
-
-		rapport_pfis = 1 + ((nat_pfis_10k-commune_pfis)/nat_pfis_10k)
-		envl_4 = commune_pop_dgf * rapport_pfis * valeur_point_cible_10pc
-
-		return envl_1 + envl_2 + envl_3 + envl_4
-
-
-
-
-s = Simulation(db_communes,a,None)
-s._simulation_generale()
+s = Simulation(db_communes,a,a,d_c)
+o,n = s._simulation_generale()
+syn = s._generer_synthese(o,n)
 
 
 
