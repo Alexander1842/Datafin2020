@@ -151,22 +151,22 @@ class Legislation:
 			self.L2334_22_1_code[e] = code["L2334_22_1"].split(L2334_22_1[e][0])[-1].split(L2334_22_1[e][1])[0]
 
 
-c = {}
+#c = {}
 
-for e in ["L2334_20","L2334_21","L2334_22","L2334_22_1"]:
-	c[e] = open(e+".txt").read()
+#for e in ["L2334_20","L2334_21","L2334_22","L2334_22_1"]:
+#	c[e] = open(e+".txt").read()
 
-a = Legislation(c)
-
-
-db_raw = get_dict_db(input(">> "))
-db_communes = []
+#a = Legislation(c)
 
 
-for e in db_raw:
-	db_communes.append(Commune(db_raw,e))
+#db_raw = get_dict_db('../dgcl_2019.csv')
+#db_communes = []
 
-d_c = {"nat_pfi_m_10k":856.050899}
+
+#for e in db_raw:
+#	db_communes.append(Commune(db_raw,e))
+
+#d_c = {"nat_pfi_m_10k":856.050899}
 
 
 
@@ -420,9 +420,9 @@ class Simulation:
 		return synthese
 
 
-s = Simulation(db_communes,a,b,d_c)
-o,n = s._simulation_generale()
-syn = s._generer_synthese(o,n)
+#s = Simulation(db_communes,a,b,d_c)
+#o,n = s._simulation_generale()
+#syn = s._generer_synthese(o,n)
 
 
 
