@@ -47,6 +47,8 @@ class SimulDSRHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             c1[e] = open(e+".txt").read()
             c2[e] = data[e] if e in data else c1[e]
 
+        open('L2334_21-modifié.txt', 'w').write(c2['L2334_21'])
+
         a = simul_dsr.Legislation(c1)
         b = simul_dsr.Legislation(c2)
 
@@ -67,6 +69,7 @@ class SimulDSRHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", len(bytes(json_syn,'utf-8')))
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(bytes(json_syn, 'utf-8'))
 
