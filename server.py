@@ -25,7 +25,7 @@ class SimulDSRHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
 
-        if self.path not in ['/simul']:
+        if self.path not in ['/simul_dsr']:
             self.send_error(400)
             return
 
